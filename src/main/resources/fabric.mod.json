@@ -11,7 +11,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.moranpcy.networkchaos.NetworkChaosMod"
+      "org.edtp.networkchaos.NetworkChaosMod"
     ]
   },
   "mixins": [

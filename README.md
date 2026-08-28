@@ -1,15 +1,15 @@
 # Network Chaos Fabric
 
-A small Fabric test mod for injecting deterministic network faults into the
-in-memory connection between a Minecraft client and its integrated server.
+A small Fabric test mod for injecting deterministic network faults into local
+Minecraft connections (integrated-server memory connections and loopback TCP).
 It is intended for repeatable integration tests of mods such as printers,
 inventory protocols, and server-authoritative interactions.
 
 ## Scope and safety
 
 - Disabled by default.
-- Only intercepts `Connection.isMemoryConnection()` traffic, so it cannot
-  affect a normal remote multiplayer connection.
+- Only intercepts in-memory or loopback traffic, so it cannot affect a normal
+  remote multiplayer connection.
 - Only intercepts packets after the connection enters the PLAY protocol.
 - Keep-alive, disconnect, login/configuration, ping/pong, cookie, and resource
   pack control packets are protected by default.
@@ -26,7 +26,7 @@ missing-confirmation behavior.
 
 ## Supported faults
 
-Each direction has an independent [`LinkProfile`](src/main/java/com/moranpcy/networkchaos/api/LinkProfile.java):
+Each direction has an independent [`LinkProfile`](src/main/java/org/edtp/networkchaos/api/LinkProfile.java):
 
 - packet loss probability;
 - base latency;
@@ -38,6 +38,11 @@ A seed makes each direction's sequence independently reproducible, so adding
 C2S traffic does not change the S2C fault sequence. A full-class-name regex can select
 only packets relevant to a test, for example only carried-slot and block-update
 packets.
+
+Tests can also install ordered exact-drop rules. Each rule selects one traffic
+direction and one full packet-class-name regex, then drops exactly the first
+configured number of matches. This covers deterministic regression scenarios
+without adding packet-specific mixins to every consuming project.
 
 ## In-game commands
 
@@ -68,6 +73,12 @@ ChaosConfig config = new ChaosConfig(
         ".*(ServerboundSetCarriedItemPacket|ClientboundBlockUpdatePacket)",
         "(?!)");
 
+config = config.withExactDropRules(
+        ExactDropRule.forPacketClass(
+                TrafficDirection.CLIENT_TO_SERVER,
+                ServerboundSetCarriedItemPacket.class,
+                3));
+
 NetworkChaos.enable(config);
 try {
     // Run the integration scenario and inspect NetworkChaos.stats().
@@ -76,7 +87,7 @@ try {
 }
 ```
 
-The public API is under `com.moranpcy.networkchaos.api`; Minecraft interception,
+The public API is under `org.edtp.networkchaos.api`; Minecraft interception,
 scheduling, and random decisions remain internal.
 
 ## Build and verification

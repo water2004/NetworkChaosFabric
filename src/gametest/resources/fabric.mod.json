@@ -6,7 +6,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
-      "com.moranpcy.networkchaos.internal.NetworkChaosGameTests"
+      "org.edtp.networkchaos.internal.NetworkChaosGameTests"
     ]
   }
 }
