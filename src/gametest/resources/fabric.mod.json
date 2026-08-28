@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "network-chaos-fabric-gametest",
+  "version": "1.0.0",
+  "name": "Network Chaos Fabric GameTest",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.moranpcy.networkchaos.internal.NetworkChaosGameTests"
+    ]
+  }
+}

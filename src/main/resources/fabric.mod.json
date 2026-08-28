@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "network_chaos_fabric",
+  "version": "${version}",
+  "name": "Network Chaos Fabric",
+  "description": "Deterministic packet loss, latency, jitter, duplication, and reordering for single-player integration testing.",
+  "authors": [
+    "MoRanpcy"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.moranpcy.networkchaos.NetworkChaosMod"
+    ]
+  },
+  "mixins": [
+    "network-chaos-fabric.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
