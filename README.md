@@ -92,7 +92,7 @@ scheduling, and random decisions remain internal.
 
 ## Build and verification
 
-The project targets Minecraft 26.2 and Java 25.
+The project targets Minecraft 26.3 and Java 25.
 
 ```powershell
 .\gradlew.bat build runGameTest
