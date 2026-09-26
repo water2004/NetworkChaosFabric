@@ -4,9 +4,9 @@ import org.edtp.networkchaos.api.ChaosConfig;
 import org.edtp.networkchaos.api.ChaosStats;
 import org.edtp.networkchaos.api.TrafficDirection;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
+import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -51,7 +51,7 @@ public final class NetworkChaosRuntime {
     public static boolean intercept(
             Connection connection,
             Packet<?> packet,
-            ChannelFutureListener listener,
+            PacketSendListener listener,
             Channel channel,
             boolean flush) {
         if (BYPASS.get() || !ENABLED.get()) return false;
@@ -168,7 +168,7 @@ public final class NetworkChaosRuntime {
     private static void schedule(
             Connection connection,
             Packet<?> packet,
-            ChannelFutureListener listener,
+            PacketSendListener listener,
             boolean flush,
             long delayMillis,
             long expectedEpoch,
@@ -204,15 +204,16 @@ public final class NetworkChaosRuntime {
     }
 
     private static boolean isControlPacket(Packet<?> packet) {
-        String name = packet.getClass().getSimpleName();
-        return name.contains("KeepAlive")
-                || name.contains("Disconnect")
-                || name.contains("Configuration")
-                || name.contains("Login")
-                || name.contains("Cookie")
-                || name.contains("Ping")
-                || name.contains("Pong")
-                || name.contains("ResourcePack");
+        // Packet identifiers are stable after Fabric remaps class names in production.
+        String name = packet.type().id().getPath();
+        return name.contains("keep_alive")
+                || name.contains("disconnect")
+                || name.contains("configuration")
+                || name.contains("login")
+                || name.contains("cookie")
+                || name.contains("ping")
+                || name.contains("pong")
+                || name.contains("resource_pack");
     }
 
     private static boolean isLocalConnection(
@@ -228,11 +229,11 @@ public final class NetworkChaosRuntime {
 
     private static void completeDroppedSend(
             Channel channel,
-            ChannelFutureListener listener) {
+            PacketSendListener listener) {
         if (channel == null || listener == null) return;
         Runnable callback = () -> {
             try {
-                listener.operationComplete(channel.newSucceededFuture());
+                listener.onSuccess();
             } catch (Exception exception) {
                 LOGGER.error("Dropped-packet completion listener failed", exception);
             }

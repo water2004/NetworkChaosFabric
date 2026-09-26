@@ -10,7 +10,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.permissions.Permissions;
 
 import java.util.Locale;
 
@@ -25,8 +24,7 @@ public final class NetworkChaosMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register(
                 (dispatcher, registryAccess, environment) -> dispatcher.register(
                         literal("networkchaos")
-                                .requires(source -> source.permissions()
-                                        .hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                                .requires(source -> source.hasPermission(2))
                                 .then(literal("off").executes(context -> {
                                     NetworkChaos.disable();
                                     context.getSource().sendSuccess(

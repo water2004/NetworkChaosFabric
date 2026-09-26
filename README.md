@@ -1,3 +1,5 @@
+> Minecraft 1.21.1 backport. See [PORTING_1.21.1.md](PORTING_1.21.1.md) for compatibility and verification details.
+
 # Network Chaos Fabric
 
 A small Fabric test mod for injecting deterministic network faults into local
@@ -92,7 +94,7 @@ scheduling, and random decisions remain internal.
 
 ## Build and verification
 
-The project targets Minecraft 26.3 and Java 25.
+The project targets Minecraft 1.21.1 and Java 21.
 
 ```powershell
 .\gradlew.bat build runGameTest

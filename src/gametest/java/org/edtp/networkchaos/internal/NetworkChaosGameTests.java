@@ -5,21 +5,26 @@ import org.edtp.networkchaos.api.ChaosStats;
 import org.edtp.networkchaos.api.ExactDropRule;
 import org.edtp.networkchaos.api.LinkProfile;
 import org.edtp.networkchaos.api.NetworkChaos;
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.network.protocol.common.ClientboundKeepAlivePacket;
+import net.minecraft.network.protocol.common.ClientboundPingPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 
-public final class NetworkChaosGameTests {
+public final class NetworkChaosGameTests implements FabricGameTest {
     private static final String BLOCK_UPDATE_ONLY =
             ".*ClientboundBlockUpdatePacket";
 
-    @GameTest(maxTicks = 30)
+    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 100)
     public void localPlayConnectionSupportsDropDelayAndCancellation(
             GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
@@ -115,10 +120,40 @@ public final class NetworkChaosGameTests {
                     NetworkChaos.stats().serverToClient().cancelledFromQueue(),
                     1L,
                     "Disabling must invalidate queued packets");
+            controlPacketsAndCompletionCallbacks(helper, player);
             helper.succeed();
         } finally {
             NetworkChaos.reset();
         }
+    }
+
+    private static void controlPacketsAndCompletionCallbacks(
+            GameTestHelper helper, ServerPlayer player) {
+        NetworkChaos.reset();
+        NetworkChaosRuntime.enableTestMode();
+        NetworkChaos.enable(new ChaosConfig(LinkProfile.CLEAR,
+                new LinkProfile(1, 0, 0, 0, 0, 0), 31, true,
+                ChaosConfig.ALL_PACKETS, ChaosConfig.NO_PACKETS));
+        player.connection.send(new ClientboundKeepAlivePacket(31));
+        player.connection.send(new ClientboundPingPacket(32));
+        helper.assertValueEqual(NetworkChaos.stats().protectedControlPackets(), 2L,
+                "1.21.1 control packet IDs must be protected even after production remapping");
+        helper.assertValueEqual(NetworkChaos.stats().serverToClient().dropped(), 0L,
+                "Protected packets must bypass the 100% loss profile");
+        AtomicInteger completions = new AtomicInteger();
+        player.connection.send(packet(),
+                PacketSendListener.thenRun(completions::incrementAndGet));
+        await(helper, () -> completions.get() == 1, "Dropped 1.21.1 sends must complete their listener once");
+        helper.assertValueEqual(NetworkChaos.stats().serverToClient().dropped(), 1L,
+                "Data packets remain eligible for loss while control packets are protected");
+        NetworkChaos.reset();
+        NetworkChaosRuntime.enableTestMode();
+        NetworkChaos.enable(new ChaosConfig(LinkProfile.CLEAR,
+                new LinkProfile(1, 0, 0, 0, 0, 0), 31, false,
+                ChaosConfig.ALL_PACKETS, ChaosConfig.NO_PACKETS));
+        player.connection.send(new ClientboundKeepAlivePacket(33));
+        helper.assertValueEqual(NetworkChaos.stats().serverToClient().dropped(), 1L,
+                "Explicitly disabling control protection permits loss of keepalive packets");
     }
 
     private static ClientboundBlockUpdatePacket packet() {

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - codex/mc-1.21.1
     tags:
       - '[0-9]*'
   pull_request:
@@ -22,11 +23,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Microsoft OpenJDK 25
+      - name: Set up Microsoft OpenJDK 21
         uses: actions/setup-java@v6
         with:
           distribution: microsoft
-          java-version: '25'
+          java-version: '21'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6

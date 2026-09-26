@@ -2,8 +2,8 @@ package org.edtp.networkchaos.mixin;
 
 import org.edtp.networkchaos.internal.NetworkChaosRuntime;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.protocol.Packet;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,12 +18,12 @@ public abstract class ConnectionMixin {
 
     @Inject(
             method = "send(Lnet/minecraft/network/protocol/Packet;"
-                    + "Lio/netty/channel/ChannelFutureListener;Z)V",
+                    + "Lnet/minecraft/network/PacketSendListener;Z)V",
             at = @At("HEAD"),
             cancellable = true)
     private void networkChaos$interceptSend(
             Packet<?> packet,
-            ChannelFutureListener listener,
+            PacketSendListener listener,
             boolean flush,
             CallbackInfo callback) {
         if (NetworkChaosRuntime.intercept(
